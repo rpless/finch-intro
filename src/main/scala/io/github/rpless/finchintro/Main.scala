@@ -6,7 +6,6 @@ import io.finch.argonaut._
 import io.finch.route._
 
 object Main extends App {
-  import CommentThread._
   val commentThreadRepo = new CommentThreadRepository
   commentThreadRepo.put(CommentThread("foo", Seq(Comment("bar", "Hello"))))
 
