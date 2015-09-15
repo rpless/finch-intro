@@ -1,5 +1,5 @@
-lazy val finchtalk = project.in(file("."))
-  .settings(moduleName := "finch-talk")
+lazy val finchIntro = project.in(file("."))
+  .settings(moduleName := "finch-intro")
   .settings(baseSettings)
 
 lazy val baseSettings = Seq(
@@ -14,8 +14,8 @@ lazy val baseSettings = Seq(
 )
 
 lazy val baseDependencies = Seq(
-  "com.github.finagle" %% "finch-core" % "0.9.0-SNAPSHOT" changing(),
-  "com.github.finagle" %% "finch-circe" % "0.9.0-SNAPSHOT" changing(),
+  "com.github.finagle" %% "finch-core" % "0.9.0-SNAPSHOT",
+  "com.github.finagle" %% "finch-argonaut" % "0.9.0-SNAPSHOT",
 
   "org.scalatest" %% "scalatest" % "2.2.5" % "test"
 )
