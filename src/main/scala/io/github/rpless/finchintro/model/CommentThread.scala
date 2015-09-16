@@ -1,7 +1,7 @@
-package io.github.rpless.finchintro
+package io.github.rpless.finchintro.model
 
-import _root_.argonaut._
 import argonaut.Argonaut._
+import argonaut._
 
 object CommentThread {
   implicit val commentThreadCodec: CodecJson[CommentThread] =

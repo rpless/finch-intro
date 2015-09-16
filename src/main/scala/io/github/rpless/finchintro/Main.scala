@@ -3,15 +3,16 @@ package io.github.rpless.finchintro
 import com.twitter.finagle.Httpx
 import com.twitter.util.Await
 import io.finch.argonaut._
-import io.finch.route._
+import io.github.rpless.finchintro.endpoint.CommentThreadEndpoint
+import io.github.rpless.finchintro.model.{CommentThread, Comment}
+import io.github.rpless.finchintro.repository.CommentThreadRepository
 
 object Main extends App {
   val commentThreadRepo = new CommentThreadRepository
-  commentThreadRepo.put(CommentThread("foo", Seq(Comment("bar", "Hello"))))
+  commentThreadRepo.put(CommentThread("foo", Seq(Comment(Some("bar"), "Hello"))))
 
-  val listComments: Router[Seq[CommentThread]] = get("thread") { commentThreadRepo.list() }
-  val getCommentThread: Router[CommentThread] = get("thread" / string) { (str: String) => commentThreadRepo.get(str) }
-  val api = (listComments :+: getCommentThread).toService
+  val config: AppConfig = AppConfig(commentThreadRepo)
+  val api = CommentThreadEndpoint(config).toService
 
   Await.ready(Httpx.serve(":8080", api))
 }
