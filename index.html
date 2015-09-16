@@ -149,11 +149,59 @@
 
 					<section>
 						<h3>Modeling our data</h3>
+
+						<pre>
+							<code class="scala">
+case class CommentThread(id: String, comments: Seq[Comment])
+
+case class Comment(id: Option[String], text: String)
+							</code>
+						</pre>
+					</section>
+
+					<section>
+						<h3>Start the Server</h3>
+						<pre>
+							<code class="scala">
+import com.twitter.finagle.Httpx
+import com.twitter.util.Await
+import io.finch.argonaut._
+import io.github.rpless.finchintro.endpoint.CommentThreadEndpoint
+import io.github.rpless.finchintro.repository.CommentThreadRepository
+
+object Main extends App {
+  val config: AppConfig = AppConfig(new CommentThreadRepository)
+  val api = CommentThreadEndpoint(config).toService
+
+  Await.ready(Httpx.serve(":8080", api))
+}
+							</code>
+						</pre>
+						<aside class="notes">
+							Starts an Http server on 8080 using a Service <br />
+							The CommentThreadEndpoint is actually an Endpoint (Router)<br />
+						</aside>
+					</section>
+
+					<section>
+						<pre>
+							<code class="scala">
+object CommentThreadEndpoint {
+  def apply(config: AppConfig) = {
+    listComments(config) :+:
+    getCommentThread(config) :+:
+    createComment(config)
+  }
+
+}
+							</code>
+						</pre>
+
+						<aside class="notes">
+							
+						</aside>
 					</section>
 				</section>
-
-
-
 
 				<section>
 					<section>
