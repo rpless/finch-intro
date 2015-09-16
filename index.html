@@ -135,18 +135,30 @@
 				<section>
 					<section>
 						<h1>Finch Basics</h1>
+						<p>HTTP Service: Request => Future[Response]</p>
 						<aside class="notes">
 							Talk about the basic pieces of Finch. <br />
+							The Service we care about is from HTTP Requests to HTTP Responses <br />
 							Finch makes Heavy use of Shapeless. <br />
 						</aside>
 					</section>
 
 					<section>
 						<h1>Request</h1>
+						<pre>
+							<code class="scala">
+val paramReader = param("foo")
+val intReader = passwordReader.as[Int]
+val validatedParamReader = intReader.shoul(beLessThan(18))
+							</code>
+						</pre>
 						<aside class="notes">
 							Just a Finagle-HTTPX request <br />
 							Request Readers: A Reader Monad for handling requests <br />
 							Readers for `params`, `headers`, `body`, `files`, and more... <br />
+							Decoders convert the Type of Request Readers <br />
+							Validation throws errors, if the val in the reader does not conform <br />
+							For Comprehensions and Applicative
 						</aside>
 					</section>
 
@@ -154,13 +166,14 @@
 						<h1>Response</h1>
 						<pre>
 							<code class="scala">
-val ok = Ok()
+val ok = Ok("Hello!")
 val created = Created().withHeaders("Some-Header" -> "Some-Value")
 							</code>
 						</pre>
 						<aside class="notes">
 							One of these for every response type <br />
 							Also have things for cookies and content types <br />
+							Encoders for writing out data<br />
 							BORING <br />
 						</aside>
 					</section>
@@ -195,7 +208,7 @@ val router = get("commentThread")
 					</section>
 
 					<section>
-						<h3>Modeling our data</h3>
+						<h2>Modeling our data</h2>
 
 						<pre>
 							<code class="scala">
@@ -210,16 +223,11 @@ case class Comment(id: Option[String], text: String)
 						<h3>Start the Server</h3>
 						<pre>
 							<code class="scala">
-import com.twitter.finagle.Httpx
-import com.twitter.util.Await
 import io.finch.argonaut._
-import io.github.rpless.finchintro.endpoint.CommentThreadEndpoint
-import io.github.rpless.finchintro.repository.CommentThreadRepository
 
 object Main extends App {
   val config: AppConfig = AppConfig(new CommentThreadRepository)
   val api = CommentThreadEndpoint(config).toService
-
   Await.ready(Httpx.serve(":8080", api))
 }
 							</code>
@@ -231,22 +239,73 @@ object Main extends App {
 					</section>
 
 					<section>
+						<h2>Get a Comment Thread</h2>
 						<pre>
 							<code class="scala">
 object CommentThreadEndpoint {
-  def apply(config: AppConfig) = {
-    listComments(config) :+:
-    getCommentThread(config) :+:
-    createComment(config)
-  }
+  def apply(config: AppConfig) = listComments(config)
 
+  def listComments(config: AppConfig): Router[Seq[CommentThread]] =
+    get("thread") { config.commentThreadRepo.list() }
 }
 							</code>
 						</pre>
-
 						<aside class="notes">
-
+							Basic Router: Accepts all GETs to /thread <br />
+							Calls The Function. <br />
+							BUT HOLD ON SERVICES ARE FROM REQUEST => RESPONSE.
+							NOT REQUEST => Seq[CommentThread] <br />
+							This can't work. Or can it?
 						</aside>
+					</section>
+
+					<section>
+						<h2>EncodeResponse</h2>
+						<pre>
+							<code class="scala">
+implicit val commentCodec: CodecJson[Comment] =
+  casecodec2(Comment.apply, Comment.unapply)("id", "text")
+
+implicit val commentThreadCodec: CodecJson[CommentThread] =
+casecodec2(CommentThread.apply, CommentThread.unapply)("id", "comments")
+							</code>
+						</pre>
+						<aside class="notes">
+							Using Finch Argonaut we can convert argonaut Codecs into Decoders and Encoders. <br />
+							Similar mechanism for the other Json Libraries.
+						</aside>
+					</section>
+
+					<section>
+						<h2>Get a specific Comment Thread</h2>
+						<pre>
+							<code class="scala">
+def getCommentThread(config: AppConfig): Router[CommentThread] =
+  get("thread" / string) { (str: String) =>
+    config.commentThreadRepo.get(str)
+  }
+							</code>
+						</pre>
+						<aside class="notes">
+							Arbitrary String in the request. <br />
+							Gets collected and passed to the function that is run <br />
+							Type Safe. Uses HList <br />
+						</aside>
+					</section>
+
+					<section>
+						<h2>Creating a comment with Request Readers</h2>
+						<pre>
+							<code class="scala">
+def createComment(config: AppConfig): Router[Comment] = {
+  val commentReader = body.as[Comment]
+  post("thread" / string / "comment" ? commentReader) {
+    (threadId: String, comment: Comment) =>
+    config.commentThreadRepo.createComment(threadId, comment)
+  }
+}
+							</code>
+						</pre>
 					</section>
 				</section>
 
