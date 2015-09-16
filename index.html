@@ -132,6 +132,57 @@
 					</section>
 				</section>
 
+
+				<section>
+					<h1>Finch Basics</h1>
+					<aside class="notes">
+						Talk about the basic pieces of Finch.
+					</aside>
+				</section>
+
+				<section>
+					<section>
+						<h1>Request</h1>
+					</section>
+				</section>
+
+				<section>
+					<section>
+						<h1>Response</h1>
+						<pre>
+							<code class="scala">
+val ok = Ok()
+val created = Created().withHeaders("Some-Header" -> "Some-Value")
+							</code>
+						</pre>
+						<aside class="notes">
+							One of these for every response type <br />
+							BORING <br />
+						</aside>
+					</section>
+
+					<section>
+						<h1>EncodeResponse</h1>
+						<pre>
+							<code class="scala">
+val notfound = NotFound("body")
+val created = Created(Comment(Some("123"), "This is a Comment"))
+							</code>
+						</pre>
+						<aside class="notes">
+							Type class to Convert A => com.twitter.io.Buf <br />
+							Implicit on scope, otherwise you get a rather nice error <br />
+							Tells the ResponseBuilder what the content type. <br />
+						</aside>
+					</section>
+				</section>
+
+				<section>
+					<section>
+						<h1>Router / Endpoint</h1>
+					</section>
+				</section>
+
 				<section>
 					<section><h2>Let's Build a Something with Finch</h2></section>
 
@@ -198,7 +249,7 @@ object CommentThreadEndpoint {
 						</pre>
 
 						<aside class="notes">
-							
+
 						</aside>
 					</section>
 				</section>
