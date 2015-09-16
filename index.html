@@ -15,7 +15,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
 
 		<link rel="stylesheet" href="css/reveal.css">
-		<link rel="stylesheet" href="css/theme/moon.css" id="theme">
+		<link rel="stylesheet" href="css/theme/solarized.css" id="theme">
 
 		<!-- Code syntax highlighting -->
 		<link rel="stylesheet" href="lib/css/zenburn.css">
@@ -44,6 +44,94 @@
 						<small>Ryan Plessner | <a href="http://twitter.com/ryan_plessner">@ryan_plessner</a></small>
 					</p>
 				</section>
+
+				<section>
+					<section>
+						<h2>What is Finch?</h2>
+						<img class="no-border" src="https://raw.githubusercontent.com/finagle/finch/master/finch-logo.png"  />
+						<br/>
+						<a target="_blank" href="https://www.github.com/finagle/finch">github.com/finagle/finch</a>
+						<br/>
+						<img class="no-border" src="https://travis-ci.org/finagle/finch.svg?branch=master" />
+						<img class="no-border" src='https://coveralls.io/repos/finagle/finch/badge.svg?branch=master' alt='Coverage Status' />
+
+						<aside class="notes">
+							Twitter Open Source Project in the Finagle ecosystem. <br />
+							Provides a more idiomatic and Functional Finagle-Http. <br />
+							Its been around since April, I started contributing in August <br />
+						</aside>
+					</section>
+
+					<section>
+						<h2>Built on Finagle</h2>
+						<img class="no-border" src="https://camo.githubusercontent.com/5817603f4c475459b07f31d6df1a1cecb29f34dd/68747470733a2f2f7261772e6769746875622e636f6d2f747769747465722f66696e61676c652f6d61737465722f646f632f7372632f737068696e782f5f7374617469632f6c6f676f5f736d616c6c2e706e67" width="360px"/>
+						<br />
+						<a target="_blank" href="https://twitter.github.io/finagle/">twitter.github.io/finagle/</a>
+
+						<aside class="notes">
+							Extensible RPC system for the JVM used mainly to construct high-concurrency systems. <br />
+							Protocol Agnostic. <br />
+							Particularly interested in the Http library which is built on Netty 3. <br />
+						</aside>
+					</section>
+				</section>
+
+				<section>
+					<section>
+						<h2>Quick Finagle Overview</h2>
+						<aside class="notes">
+							Quick review of Finagle's core concepts for those that haven't used it. <br />
+							"Your Server as a Function" <br />
+							Implements traits for both clients and servers <br />
+							Only going to focus on Server side. <br />
+						</aside>
+					</section>
+					<section>
+						<h2>Futures</h2>
+						<ul>
+							<li>Featherweight Threads</li>
+							<li>Composable</li>
+						</ul>
+
+						<aside class="notes">
+							Composable Concurrent Operations.  <br />
+							Threads are really lightweight.    <br />
+							States: Pending, Suceeded, Failed  <br />
+							Compose with flatmap and onSuccess <br />
+							Recover with recover and onFailure <br />
+						</aside>
+					</section>
+
+					<section>
+						<h2>Services</h2>
+						<p>Req => Future[Rep]</p>
+					<aside class="notes">
+						Implement Application Logic <br />
+						Its just a function. <br />
+						Backbone of server implementations. <br />
+					</aside>
+					</section>
+
+					<section>
+						<h2>Filters</h2>
+						<p>(ReqIn, Service[ReqOut, RepIn]) => Future[RepOut]<p/>
+
+						<aside class="notes">
+							Also a function. <br />
+							Given a request and the next Service in the Chain. <br />
+							Most commonly used where Requests and Responses are the same type. <br />
+						</aside>
+					</section>
+
+					<section>
+						<h3>Filters and Services are Composable</h3>
+						<aside class="notes">
+							Composed using the andthen function. <br />
+							Can compose services and filters <br />
+						</aside>
+					</section>
+				</section>
+
 			</div>
 		</div>
 
