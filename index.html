@@ -132,21 +132,24 @@
 					</section>
 				</section>
 
-
-				<section>
-					<h1>Finch Basics</h1>
-					<aside class="notes">
-						Talk about the basic pieces of Finch.
-					</aside>
-				</section>
-
 				<section>
 					<section>
-						<h1>Request</h1>
+						<h1>Finch Basics</h1>
+						<aside class="notes">
+							Talk about the basic pieces of Finch. <br />
+							Finch makes Heavy use of Shapeless. <br />
+						</aside>
 					</section>
-				</section>
 
-				<section>
+					<section>
+						<h1>Request</h1>
+						<aside class="notes">
+							Just a Finagle-HTTPX request <br />
+							Request Readers: A Reader Monad for handling requests <br />
+							Readers for `params`, `headers`, `body`, `files`, and more... <br />
+						</aside>
+					</section>
+
 					<section>
 						<h1>Response</h1>
 						<pre>
@@ -157,30 +160,23 @@ val created = Created().withHeaders("Some-Header" -> "Some-Value")
 						</pre>
 						<aside class="notes">
 							One of these for every response type <br />
+							Also have things for cookies and content types <br />
 							BORING <br />
 						</aside>
 					</section>
 
-					<section>
-						<h1>EncodeResponse</h1>
-						<pre>
-							<code class="scala">
-val notfound = NotFound("body")
-val created = Created(Comment(Some("123"), "This is a Comment"))
-							</code>
-						</pre>
-						<aside class="notes">
-							Type class to Convert A => com.twitter.io.Buf <br />
-							Implicit on scope, otherwise you get a rather nice error <br />
-							Tells the ResponseBuilder what the content type. <br />
-						</aside>
-					</section>
-				</section>
-
-				<section>
-					<section>
-						<h1>Router / Endpoint</h1>
-					</section>
+						<section>
+							<h1>Router (Endpoint)</h1>
+							<pre>
+								<code class="scala">
+val router = get("commentThread")
+								</code>
+							</pre>
+							<aside class="notes">
+								Use HTTP Request to determine if request should be mapped their associated function <br />
+								Routers can be combined to make larger Routers <br />
+							</aside>
+						</section>
 				</section>
 
 				<section>
