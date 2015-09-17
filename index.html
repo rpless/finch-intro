@@ -294,6 +294,24 @@ def getCommentThread(config: AppConfig): Router[CommentThread] =
 					</section>
 
 					<section>
+						<h2>Add it to the Endpoint</h2>
+						<pre>
+							<code class="scala">
+object CommentThreadEndpoint {
+  def apply(config: AppConfig) = {
+    listComments(config) :+: getCommentThread(config)
+  }
+}
+							</code>
+						</pre>
+						<aside class="notes">
+							Added to the Router <br />
+							But what is happening here? Those Routers don't have the same type. <br />
+							HList strikes again <br />
+						</aside>
+					</section>
+
+					<section>
 						<h2>Creating a comment with Request Readers</h2>
 						<pre>
 							<code class="scala">
@@ -306,6 +324,25 @@ def createComment(config: AppConfig): Router[Comment] = {
 }
 							</code>
 						</pre>
+					</section>
+
+					<section>
+						<h2></h2>
+						<pre>
+							<code class="scala">
+object CommentThreadEndpoint {
+  def apply(config: AppConfig) = {
+    listComments(config) :+:
+    getCommentThread(config) :+:
+    createComment(config)
+  }
+}
+							</code>
+						</pre>
+						<aside class="notes">
+							Gets appending same as before <br />
+							What if we want this endpoint to be protected.
+						</aside>
 					</section>
 				</section>
 
