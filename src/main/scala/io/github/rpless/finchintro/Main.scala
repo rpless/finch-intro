@@ -5,6 +5,7 @@ import com.twitter.util.Await
 import io.finch.argonaut._
 import io.github.rpless.finchintro.endpoint.CommentThreadEndpoint
 import io.github.rpless.finchintro.model.{CommentThread, Comment}
+import io.github.rpless.finchintro.model.Comment._
 import io.github.rpless.finchintro.repository.CommentThreadRepository
 
 object Main extends App {
