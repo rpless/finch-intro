@@ -10,7 +10,7 @@ import io.github.rpless.finchintro.repository.CommentThreadRepository
 
 object Main extends App {
   val commentThreadRepo = new CommentThreadRepository
-  commentThreadRepo.put(CommentThread(0, Seq(Comment(Some(0), "Hello"))))
+  commentThreadRepo.put(CommentThread(0, Seq(Comment(Some(0), "Ryan", "Hello"))))
 
   val config: AppConfig = AppConfig(commentThreadRepo)
   val api = CommentThreadEndpoint(config).toService

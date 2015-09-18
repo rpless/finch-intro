@@ -21,7 +21,7 @@ object CommentThreadEndpoint {
     }
 
   def createComment(config: AppConfig): Router[Comment] = {
-    post("thread" / long / "comment" ? commentReader) {
+    post("thread" / long / "comment" ? commentParamReader) {
       (threadId: Long, comment: Comment) =>
       config.commentThreadRepo.createComment(threadId, comment)
     }
