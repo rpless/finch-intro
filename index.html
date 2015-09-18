@@ -244,7 +244,7 @@ object CommentThreadEndpoint {
 							</code>
 						</pre>
 						<aside class="notes">
-							Basic Router: Accepts all GETs to /thread <br />
+							Basic Matcher: Accepts all GETs to /thread <br />
 							Calls The Function. <br />
 							BUT HOLD ON SERVICES ARE FROM REQUEST => RESPONSE.
 							NOT REQUEST => Seq[CommentThread] <br />
@@ -265,7 +265,7 @@ casecodec2(CommentThread.apply, CommentThread.unapply)("id", "comments")
 						</pre>
 						<aside class="notes">
 							Using Finch Argonaut we can convert argonaut Codecs into Decoders and Encoders. <br />
-							Similar mechanism for the other Json Libraries.
+							This allows us to encode CommentThreads as the body of an Http Response <br />
 						</aside>
 					</section>
 
@@ -274,15 +274,15 @@ casecodec2(CommentThread.apply, CommentThread.unapply)("id", "comments")
 						<pre>
 							<code class="scala">
 def getCommentThread(config: AppConfig): Router[CommentThread] =
-  get("thread" / string) { (str: String) =>
-    config.commentThreadRepo.get(str)
+  get("thread" / long) { (id: Long) =>
+    config.commentThreadRepo.get(id)
   }
 							</code>
 						</pre>
 						<aside class="notes">
-							Arbitrary String in the request. <br />
-							Gets collected and passed to the function that is run <br />
-							Type Safe. Uses HList <br />
+							Arbitrary Long in the request. <br />
+							Gets collected, converted and passed to the function that is run <br />
+							Type Safe. Won't match if it can't be a long <br />
 						</aside>
 					</section>
 
@@ -300,7 +300,6 @@ object CommentThreadEndpoint {
 						<aside class="notes">
 							Added to the Router <br />
 							But what is happening here? Those Routers don't have the same type. <br />
-							HList strikes again <br />
 						</aside>
 					</section>
 
@@ -310,31 +309,42 @@ object CommentThreadEndpoint {
 							<code class="scala">
 def createComment(config: AppConfig): Router[Comment] = {
   val commentReader = body.as[Comment]
-  post("thread" / string / "comment" ? commentReader) {
-    (threadId: String, comment: Comment) =>
-    config.commentThreadRepo.createComment(threadId, comment)
-  }
-}
-							</code>
-						</pre>
-					</section>
-
-					<section>
-						<h2></h2>
-						<pre>
-							<code class="scala">
-object CommentThreadEndpoint {
-  def apply(config: AppConfig) = {
-    listComments(config) :+:
-    getCommentThread(config) :+:
-    createComment(config)
+  post("thread" / string / "comment") { (threadId: String) =>
+    for {
+      comment <- commentReader
+    } yield config.commentThreadRepo.createComment(threadId, comment)
   }
 }
 							</code>
 						</pre>
 						<aside class="notes">
-							Gets appending same as before <br />
-							What if we want this endpoint to be protected.
+							Use the `body` Req Reader <br />
+							Reade directly off the body of the request <br />
+							How does this work? <br />
+							The CodecJson also defines a Decoder <br />
+						</aside>
+					</section>
+
+					<section>
+						<h2>Another Possible Comment Reader</h2>
+						<pre>
+							<code class="scala">
+val commentReader = (paramOption("id") :: param("poster") :: body).as[Comment]
+def createComment(config: AppConfig): Router[Comment] = {
+  post("thread" / string / "comment") { (threadId: String) =>
+    commentReader.flatMap {
+      case c: Comment =>
+        config.commentThreadRepo.createComment(threadId, comment)
+    }
+  }
+}
+							</code>
+						</pre>
+						<aside class="notes">
+							APPLICATIVE API <br />
+							Reade directly off the body of the request <br />
+							How does this work? <br />
+							The CodecJson also defines a Decoder <br />
 						</aside>
 					</section>
 				</section>
