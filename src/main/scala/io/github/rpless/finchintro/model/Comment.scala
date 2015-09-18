@@ -12,4 +12,4 @@ object Comment {
  * @param id The comment's identifier
  * @param text The text of the comment
  */
-case class Comment(id: Option[String], text: String)
+case class Comment(id: Option[Long], text: String)

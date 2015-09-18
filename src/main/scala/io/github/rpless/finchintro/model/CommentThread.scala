@@ -12,4 +12,4 @@ object CommentThread {
  * @param id The id of the CommentThread
  * @param comments The comments in the CommentThread
  */
-case class CommentThread(id: String, comments: Seq[Comment])
+case class CommentThread(id: Long, comments: Seq[Comment])

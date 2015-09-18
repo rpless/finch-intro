@@ -1,6 +1,5 @@
 package io.github.rpless.finchintro.endpoint
 
-
 import io.finch.request._
 import io.finch.route._
 import io.github.rpless.finchintro.AppConfig
@@ -10,24 +9,23 @@ import io.finch.argonaut._
 
 object CommentThreadEndpoint {
   def apply(config: AppConfig) = {
-    listComments(config) :+:
+    listCommentThreads(config) :+:
     getCommentThread(config) :+:
     createComment(config)
   }
 
-  def listComments(config: AppConfig): Router[Seq[CommentThread]] =
+  def listCommentThreads(config: AppConfig): Router[Seq[CommentThread]] =
     get("thread") { config.commentThreadRepo.list() }
 
   def getCommentThread(config: AppConfig): Router[CommentThread] =
-    get("thread" / string) { (str: String) =>
-      config.commentThreadRepo.get(str)
+    get("thread" / long) { (id: Long) =>
+      config.commentThreadRepo.get(id)
     }
 
   def createComment(config: AppConfig): Router[Comment] = {
-
     val commentReader = body.as[Comment]
-    post("thread" / string / "comment" ? commentReader) {
-      (threadId: String, comment: Comment) =>
+    post("thread" / long / "comment" ? commentReader) {
+      (threadId: Long, comment: Comment) =>
       config.commentThreadRepo.createComment(threadId, comment)
     }
   }
