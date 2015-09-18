@@ -89,7 +89,7 @@
 					<section>
 						<h2>Futures</h2>
 						<ul>
-							<li>Featherweight Threads</li>
+							<li>Lightweight</li>
 							<li>Composable</li>
 						</ul>
 
@@ -260,7 +260,7 @@ implicit val commentCodec: CodecJson[Comment] =
   casecodec2(Comment.apply, Comment.unapply)("id", "text")
 
 implicit val commentThreadCodec: CodecJson[CommentThread] =
-casecodec2(CommentThread.apply, CommentThread.unapply)("id", "comments")
+  casecodec2(CommentThread.apply, CommentThread.unapply)("id", "comments")
 							</code>
 						</pre>
 						<aside class="notes">
@@ -380,9 +380,9 @@ val commentParamReader = (
 						<pre>
 							<code class="scala">
 val commentParamReader = (
-	paramOption("id").as[Long].should("Be Empty") { _.isEmpty } ::
-	param("commenter") ::
-	body
+  paramOption("id").as[Long].should("Be Empty") { _.isEmpty } ::
+  param("commenter") ::
+  body
 ).as[Comment]
 							</code>
 						</pre>
