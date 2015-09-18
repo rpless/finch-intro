@@ -308,20 +308,30 @@ object CommentThreadEndpoint {
 						<pre>
 							<code class="scala">
 def createComment(config: AppConfig): Router[Comment] = {
-  val commentReader = body.as[Comment]
-  post("thread" / string / "comment") { (threadId: String) =>
-    for {
-      comment <- commentReader
-    } yield config.commentThreadRepo.createComment(threadId, comment)
-  }
+  post("thread" / long / "comment" ? commentReader) {
+    (threadId: Long, comment: Comment) =>
+      config.commentThreadRepo.createComment(threadId, comment)
 }
 							</code>
 						</pre>
 						<aside class="notes">
-							Use the `body` Req Reader <br />
+							Use the Req Reader to get a comment <br />
 							Reade directly off the body of the request <br />
-							How does this work? <br />
-							The CodecJson also defines a Decoder <br />
+							What does the commentReader look like? <br />
+						</aside>
+					</section>
+
+					<section>
+						<h2>One Possible Comment Reader</h2>
+						<pre>
+							<code class="scala">
+val commentBodyReader = body.as[Comment]
+							</code>
+						</pre>
+						<aside class="notes">
+							If the info is only on the body then just reader from the body. <br />
+							This makes use of the Decoder <br />
+							What if not all of the information is on the body of the request? <br />
 						</aside>
 					</section>
 
@@ -329,22 +339,33 @@ def createComment(config: AppConfig): Router[Comment] = {
 						<h2>Another Possible Comment Reader</h2>
 						<pre>
 							<code class="scala">
-val commentReader = (paramOption("id") :: param("poster") :: body).as[Comment]
-def createComment(config: AppConfig): Router[Comment] = {
-  post("thread" / string / "comment") { (threadId: String) =>
-    commentReader.flatMap {
-      case c: Comment =>
-        config.commentThreadRepo.createComment(threadId, comment)
-    }
-  }
-}
+val commentForReader = for {
+  commenter <- param("commenter")
+  text <- body
+} yield Comment(None, commenter, text)
 							</code>
 						</pre>
 						<aside class="notes">
-							APPLICATIVE API <br />
-							Reade directly off the body of the request <br />
-							How does this work? <br />
-							The CodecJson also defines a Decoder <br />
+							Its a Monad with flatmap, map, and filter so... <br />
+							Just Use Scala's For Comprehension <br />
+							Problem: Fails fast. Not using the Decoder <br />
+						</aside>
+					</section>
+
+					<section>
+						<h2>Yet Another Possible Comment Reader</h2>
+						<pre>
+							<code class="scala">
+val commentParamReader = (
+  paramOption("id").as[Long] ::
+  param("commenter") ::
+  body
+).as[Comment]
+							</code>
+						</pre>
+						<aside class="notes">
+							APPLICATIVE. <br />
+							Accumulates all of the errors individual
 						</aside>
 					</section>
 				</section>
@@ -352,6 +373,19 @@ def createComment(config: AppConfig): Router[Comment] = {
 				<section>
 					<section>
 						<h1>Other Goodies</h1>
+					</section>
+
+					<section>
+						<h2>Request Reader Validation</h2>
+						<pre>
+							<code class="scala">
+val commentParamReader = (
+	paramOption("id").as[Long].should("Be Empty") { _.isEmpty } ::
+	param("commenter") ::
+	body
+).as[Comment]
+							</code>
+						</pre>
 					</section>
 
 					<section>
