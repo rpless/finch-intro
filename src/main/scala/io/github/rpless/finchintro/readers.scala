@@ -7,6 +7,12 @@ import io.github.rpless.finchintro.model.Comment._
 
 object readers {
   val commentBodyReader = body.as[Comment]
+
+  val commentForReader = for {
+    commenter <- param("commenter")
+    text <- body
+  } yield Comment(None, commenter, text)
+
   val commentParamReader = (
     paramOption("id").as[Long].should("Be Empty") { _.isEmpty } ::
     param("commenter") ::
