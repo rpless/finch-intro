@@ -145,49 +145,42 @@
 
 					<section>
 						<h1>Request</h1>
-						<pre>
-							<code class="scala">
-val paramReader = param("foo")
-val intReader = passwordReader.as[Int]
-val validatedParamReader = intReader.shoul(beLessThan(18))
-							</code>
-						</pre>
+						<ul>
+							<li>Finagle HTTP Requests</li>
+							<li>Request Readers</li>
+							<li>DecodeResponse</li>
+							<li>Validation</li>
+						</ul>
 						<aside class="notes">
-							Just a Finagle-HTTPX request <br />
+							What are we dealing with? <br />
 							Request Readers: A Reader Monad for handling requests <br />
 							Readers for `params`, `headers`, `body`, `files`, and more... <br />
-							Decoders convert the Type of Request Readers <br />
+							Decoders: implicits to convert the Type of Request Readers <br />
 							Validation throws errors, if the val in the reader does not conform <br />
-							For Comprehensions and Applicative
 						</aside>
 					</section>
 
 					<section>
 						<h1>Response</h1>
-						<pre>
-							<code class="scala">
-val ok = Ok("Hello!")
-val created = Created().withHeaders("Some-Header" -> "Some-Value")
-							</code>
-						</pre>
+						<ul>
+							<li>Finagle HTTP Response</li>
+							<li>Response Builder</li>
+							<li>Encode Response</li>
+						</ul>
 						<aside class="notes">
 							One of these for every response type <br />
 							Also have things for cookies and content types <br />
-							Encoders for writing out data<br />
-							BORING <br />
+							Encoders: implicits for writing out data<br />
 						</aside>
 					</section>
 
 						<section>
-							<h1>Router (Endpoint)</h1>
-							<pre>
-								<code class="scala">
-val router = get("commentThread")
-								</code>
-							</pre>
+							<h1>Routing</h1>
 							<aside class="notes">
-								Use HTTP Request to determine if request should be mapped their associated function <br />
-								Routers can be combined to make larger Routers <br />
+								Matchers attempt to match against HTTP Request. <br />
+								Can include Method type, URI Path, and Request Readers <br />
+								Maps to Functions that produce responses <br />
+								TypeSafe Extraction.
 							</aside>
 						</section>
 				</section>
