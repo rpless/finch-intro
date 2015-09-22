@@ -3,8 +3,11 @@ package io.github.rpless.finchintro.model
 import argonaut._, Argonaut._
 
 object Comment {
-  implicit val commentCodec: CodecJson[Comment] =
-    casecodec3(Comment.apply, Comment.unapply)("id", "commenter", "text")
+  implicit val decodeComment: DecodeJson[Comment] =
+    jdecode3L(Comment.apply)("id", "commenter", "text")
+
+  implicit val encodeComment: EncodeJson[Comment] =
+    jencode3L((c: Comment) => (c.id, c.commenter, c.text))("id", "commenter", "text")
 }
 
 /**
