@@ -56,7 +56,7 @@
 						<img class="no-border" src="http://codecov.io/github/finagle/finch/coverage.svg?branch=master" alt="Coverage via codecov.io" />
 
 						<aside class="notes">
-							Twitter Open Source Project in the Finagle ecosystem. <br />
+							Open Source Project in the Finagle ecosystem. <br />
 							Provides a more idiomatic and Functional Finagle-Http. <br />
 							Its been around since April, I started contributing in August <br />
 						</aside>
@@ -134,45 +134,124 @@
 
 				<section>
 					<section>
-						<h1>Finch Basics</h1>
-						<p>HTTP Service: Request => Future[Response]</p>
+						<h2>Let's Build a Something with Finch</h2>
 						<aside class="notes">
-							Talk about the basic pieces of Finch. <br />
-							The Service we care about is from HTTP Requests to HTTP Responses <br />
-							Finch makes Heavy use of Shapeless. <br />
+							We'll walk through a simple example to show how powerful finch is <br />
+							Services from Request => Future[Response]
 						</aside>
 					</section>
 
 					<section>
-						<h1>Request</h1>
-						<ul>
-							<li>Finagle HTTP Requests</li>
-							<li>Request Readers</li>
-							<li>DecodeResponse</li>
-							<li>Validation</li>
-						</ul>
+						<h2>What are we looking to solve?</h2>
+						<h3>Simple Commenting Service</h3>
+
 						<aside class="notes">
-							What are we dealing with? <br />
-							Request Readers: A Reader Monad for handling requests <br />
-							Readers for `params`, `headers`, `body`, `files`, and more... <br />
-							Decoders: implicits to convert the Type of Request Readers <br />
-							Validation throws errors, if the val in the reader does not conform <br />
+							Super Contrived Example: <br />
+							You have a website that needs a way for users to add comments. <br />
+							Anyone can view comments, but only authed users can comment <br />
+							We're gonna do a lot of hand waving as a result. <br />
 						</aside>
 					</section>
 
+					<section>
+						<h2>Modeling our data</h2>
+
+						<pre>
+							<code class="scala">
+case class CommentThread(id: Long, comments: Seq[Comment])
+
+case class Comment(id: Option[Long], commenter: String, text: String)
+							</code>
+						</pre>
+					</section>
+				</section>
+
+				<section>
+					<section>
+						<h1>Requests</h1>
+						<aside class="notes">
+							Based on HTTP Requests <br />
+							How do we extract data from the requests >br />
+						</aside>
+					</section>
+
+					<section>
+						<h2>Request Readers</h2>
+						<pre>
+							<code class="scala">
+val commentReader = body.as[Comment]
+							</code>
+						</pre>
+						<aside class="notes">
+							A Reader Monad for handling requests <br />
+							Readers for `params`, `headers`, `body`, `files`, and more... <br />
+						</aside>
+					</section>
+
+					<section>
+						<h2>Decode Request</h2>
+						<pre>
+							<code class="scala">
+import io.finch.argonaut._
+import argonaut._, Argonaut._
+
+implicit val commentCodec: DecodeJson[Comment] =
+  jdecode3L(Comment.apply)("id", "commenter", "text")
+
+implicit val commentThreadCodec: DecodeJson[CommentThread] =
+  jdecode2L(CommentThread.apply)("id", "comments")
+							</code>
+						</pre>
+						<aside class="notes">
+							Type Class <br />
+							implicits to convert the Type of Request Readers <br />
+						</aside>
+					</section>
+
+					<section>
+						<h2>Alternative Comment Reader</h2>
+						<pre>
+							<code class="scala">
+val commentReader = for {
+  commenter <- param("commenter")
+  text <- body
+} yield Comment(None, commenter, text)
+							</code>
+						</pre>
+						<aside class="notes">
+							What if its not all on the Body? That's ok. <br />
+							Its a Monad so we can use scala's `for` <br />
+							Is there a problem here?
+						</aside>
+					</section>
+
+					<section>
+						<h2>Applicative Comment Reader</h2>
+						<pre>
+							<code class="scala">
+								val commentReader = (
+								  paramOption("id").as[Long] ::
+								  param("commenter") ::
+								  body
+								).as[Comment]
+							</code>
+						</pre>
+						<aside class="notes">
+							Applicative <br />
+							Gives you all the errors <br />
+						</aside>
+					</section>
+				</section>
+
+				<section>
 					<section>
 						<h1>Response</h1>
-						<ul>
-							<li>Finagle HTTP Response</li>
-							<li>Response Builder</li>
-							<li>Encode Response</li>
-						</ul>
-						<aside class="notes">
-							One of these for every response type <br />
-							Also have things for cookies and content types <br />
-							Encoders: implicits for writing out data<br />
-						</aside>
 					</section>
+				</section>
+
+
+				<section>
+					<section>
 
 						<section>
 							<h1>Routing</h1>
@@ -198,18 +277,6 @@
 							Anyone can view comments, but only authed users can comment <br />
 							We're gonna do a lot of hand waving as a result. <br />
 						</aside>
-					</section>
-
-					<section>
-						<h2>Modeling our data</h2>
-
-						<pre>
-							<code class="scala">
-case class CommentThread(id: String, comments: Seq[Comment])
-
-case class Comment(id: Option[String], text: String)
-							</code>
-						</pre>
 					</section>
 
 					<section>
@@ -318,54 +385,6 @@ def createComment(config: AppConfig): Router[Comment] = {
 							Use the Req Reader to get a comment <br />
 							Reade directly off the body of the request <br />
 							What does the commentReader look like? <br />
-						</aside>
-					</section>
-
-					<section>
-						<h2>One Possible Comment Reader</h2>
-						<pre>
-							<code class="scala">
-val commentBodyReader = body.as[Comment]
-							</code>
-						</pre>
-						<aside class="notes">
-							If the info is only on the body then just reader from the body. <br />
-							This makes use of the Decoder <br />
-							What if not all of the information is on the body of the request? <br />
-						</aside>
-					</section>
-
-					<section>
-						<h2>Another Possible Comment Reader</h2>
-						<pre>
-							<code class="scala">
-val commentForReader = for {
-  commenter <- param("commenter")
-  text <- body
-} yield Comment(None, commenter, text)
-							</code>
-						</pre>
-						<aside class="notes">
-							Its a Monad with flatmap, map, and filter so... <br />
-							Just Use Scala's For Comprehension <br />
-							Problem: Fails fast. Not using the Decoder <br />
-						</aside>
-					</section>
-
-					<section>
-						<h2>Yet Another Possible Comment Reader</h2>
-						<pre>
-							<code class="scala">
-val commentParamReader = (
-  paramOption("id").as[Long] ::
-  param("commenter") ::
-  body
-).as[Comment]
-							</code>
-						</pre>
-						<aside class="notes">
-							APPLICATIVE. <br />
-							Accumulates all of the errors individual
 						</aside>
 					</section>
 				</section>
