@@ -253,16 +253,29 @@ val commentReader = for {
 					</section>
 
 					<section>
+						<h2>Simple Requests</h2>
 						<pre>
 							<code class="scala">
 Ok()
-NotFound("Invalid Resource")
-Created(Comment(Some(1234), "Ryan", "A Comment!"))
+Created("Some String").withHeaders("Cache-Control", "public")
 							</code>
 						</pre>
 						<aside class="notes">
 							How does this work? <br />
+							Can set cookies, headers, etc <br />
 							EncodeResponse <br />
+						</aside>
+					</section>
+
+					<section>
+						<h2>More Interesting Response Bodies</h2>
+						<pre>
+							<code class="scala">
+Created(Comment(Some(1234), "Ryan", "A Comment!"))
+							</code>
+						</pre>
+						<aside class="">
+							Can Encode a Case class as the body of an HTTP Response <br />
 						</aside>
 					</section>
 
@@ -272,30 +285,119 @@ Created(Comment(Some(1234), "Ryan", "A Comment!"))
 							<code class="scala">
 import io.finch.argonaut._
 
+val extractComment: Comment => (Long, String, String) = Comment.unapply
+
 implicit val encodeComment: EncodeJson[Comment] =
-  jencode3L((c: Comment) => (c.id, c.commenter, c.text))("id", "commenter", "text")
+  jencode3L(extractComment)("id", "commenter", "text")
 							</code>
 						</pre>
 						<aside class="notes">
+							finch argonaut provides Json => Response <br />
 							Just like Decode Requests <br />
 							implicit conversions <br />
 						</aside>
 					</section>
 				</section>
 
+				<section>
+					<section>
+						<h1>Endpoint</h1>
+						<aside class="notes">
+							Need to turn Requests into to Responses <br />
+							Matchers attempt to match against HTTP Request. <br />
+							Can include Method type, URI Path, and Request Readers <br />
+							Maps to Functions that produce responses <br />
+							TypeSafe Extraction.
+						</aside>
+					</section>
+
+					<section>
+						<h1>Basic Endpoint</h1>
+						<pre>
+							<code class="notes">
+val commentThreadsEndpoint = get("thread")
+							</code>
+						</pre>
+						<aside class="notes">
+							Matches on a GET request to the path /thread <br />
+							could be more Powerful
+						</aside>
+					</section>
+
+					<section>
+						<h2>Wiring it up</h2>
+						<pre>
+							<code class="scala">
+def listCommentThreads(config: AppConfig): Endpoint[Response] =
+  get("thread") { Ok(config.commentThreadRepo.list()) }
+							</code>
+						</pre>
+						<aside class="notes">
+							Maps a Request into a Response
+						</aside>
+					</section>
+
+					<section>
+						<h1>Extracting Value from Endpoints</h1>
+						<pre>
+							<code class="scala">
+def getCommentThread(config: AppConfig): Endpoint[CommentThread] =
+  get("thread" / long) { (id: Long) =>
+    config.commentThreadRepo.get(id)
+  }
+							</code>
+						</pre>
+						<aside class="notes">
+							Extract Path value <br />
+							And magically pass it to the mapped function. <br />
+							Endpoints will automatically wrap values in.
+							Also gives us Endpoints of a more interesting type
+						</aside>
+					</section>
+
+					<section>
+						<h1>Request Readers in Endpoints</h1>
+						<pre>
+							<code class="scala">
+def createComment(config: AppConfig): Endpoint[Comment] = {
+  post("thread" / long / "comment" ? commentReader) {
+    (threadId: Long, comment: Comment) =>
+    Created(config.commentThreadRepo.createComment(threadId, comment))
+  }
+							</code>
+						</pre>
+						<aside class="notes">
+							Use Request Reader to extract the value we care about
+						</aside>
+					</section>
+				</section>
 
 				<section>
 					<section>
+						<h1>Putting it All Together</h1>
+					</section>
 
-						<section>
-							<h1>Routing</h1>
-							<aside class="notes">
-								Matchers attempt to match against HTTP Request. <br />
-								Can include Method type, URI Path, and Request Readers <br />
-								Maps to Functions that produce responses <br />
-								TypeSafe Extraction.
-							</aside>
-						</section>
+					<section>
+						<h2>CommentThreadEndpoint</h2>
+						<pre>
+							<code class="scala">
+object CommentThreadEndpoint {
+
+  def apply(config: AppConfig) = {
+    listCommentThreads(config) :+:
+    getCommentThread(config) :+:
+    createComment(config)
+  }
+	
+  def listCommentThreads(config: AppConfig): Endpoint[Response] = ...
+
+  def getCommentThread(config: AppConfig): Endpoint[CommentThread] = ...
+
+  def createComment(config: AppConfig): Endpoint[Comment] = ...
+}
+							</code>
+						</pre>
+					</section>
 				</section>
 
 				<section>
@@ -399,7 +501,7 @@ object CommentThreadEndpoint {
 							</code>
 						</pre>
 						<aside class="notes">
-							Added to the Router <br />
+							Added to the Endpoint <br />
 							But what is happening here? Those Routers don't have the same type. <br />
 						</aside>
 					</section>
