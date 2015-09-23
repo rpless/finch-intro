@@ -19,7 +19,5 @@ object Main extends App {
     getCommentThread(config) :+:
     createComment(config)
 
-  val api = endpoints.toService
-
-  Await.ready(Httpx.serve(":8080", api))
+  Await.ready(Httpx.serve(":8080", endpoints.toService))
 }
