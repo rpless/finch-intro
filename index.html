@@ -171,7 +171,7 @@ case class Comment(id: Option[Long], commenter: String, text: String)
 						<h1>Requests</h1>
 						<aside class="notes">
 							Based on HTTP Requests <br />
-							How do we extract data from the requests >br />
+							How do we extract data from the requests <br />
 						</aside>
 					</section>
 
@@ -246,6 +246,40 @@ val commentReader = for {
 				<section>
 					<section>
 						<h1>Response</h1>
+						<aside class="notes">
+							Based on HTTP Responses <br />
+							How do we convert data to a request <br />
+						</aside>
+					</section>
+
+					<section>
+						<pre>
+							<code class="scala">
+Ok()
+NotFound("Invalid Resource")
+Created(Comment(Some(1234), "Ryan", "A Comment!"))
+							</code>
+						</pre>
+						<aside class="notes">
+							How does this work? <br />
+							EncodeResponse <br />
+						</aside>
+					</section>
+
+					<section>
+						<h2>Encode Response</h2>
+						<pre>
+							<code class="scala">
+import io.finch.argonaut._
+
+implicit val encodeComment: EncodeJson[Comment] =
+  jencode3L((c: Comment) => (c.id, c.commenter, c.text))("id", "commenter", "text")
+							</code>
+						</pre>
+						<aside class="notes">
+							Just like Decode Requests <br />
+							implicit conversions <br />
+						</aside>
 					</section>
 				</section>
 
@@ -316,23 +350,6 @@ object CommentThreadEndpoint {
 							BUT HOLD ON SERVICES ARE FROM REQUEST => RESPONSE.
 							NOT REQUEST => Seq[CommentThread] <br />
 							This can't work. Or can it?
-						</aside>
-					</section>
-
-					<section>
-						<h2>EncodeResponse</h2>
-						<pre>
-							<code class="scala">
-implicit val commentCodec: CodecJson[Comment] =
-  casecodec2(Comment.apply, Comment.unapply)("id", "text")
-
-implicit val commentThreadCodec: CodecJson[CommentThread] =
-casecodec2(CommentThread.apply, CommentThread.unapply)("id", "comments")
-							</code>
-						</pre>
-						<aside class="notes">
-							Using Finch Argonaut we can convert argonaut Codecs into Decoders and Encoders. <br />
-							This allows us to encode CommentThreads as the body of an Http Response <br />
 						</aside>
 					</section>
 
