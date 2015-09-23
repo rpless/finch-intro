@@ -89,7 +89,7 @@
 					<section>
 						<h2>Futures</h2>
 						<ul>
-							<li>Featherweight Threads</li>
+							<li>Lightweight</li>
 							<li>Composable</li>
 						</ul>
 
@@ -354,6 +354,23 @@ object CommentThreadEndpoint {
 					</section>
 
 					<section>
+						<h2>EncodeResponse</h2>
+						<pre>
+							<code class="scala">
+implicit val commentCodec: CodecJson[Comment] =
+  casecodec2(Comment.apply, Comment.unapply)("id", "text")
+
+implicit val commentThreadCodec: CodecJson[CommentThread] =
+  casecodec2(CommentThread.apply, CommentThread.unapply)("id", "comments")
+							</code>
+						</pre>
+						<aside class="notes">
+							Using Finch Argonaut we can convert argonaut Codecs into Decoders and Encoders. <br />
+							This allows us to encode CommentThreads as the body of an Http Response <br />
+						</aside>
+					</section>
+
+					<section>
 						<h2>Get a specific Comment Thread</h2>
 						<pre>
 							<code class="scala">
@@ -416,9 +433,9 @@ def createComment(config: AppConfig): Router[Comment] = {
 						<pre>
 							<code class="scala">
 val commentParamReader = (
-	paramOption("id").as[Long].should("Be Empty") { _.isEmpty } ::
-	param("commenter") ::
-	body
+  paramOption("id").as[Long].should("Be Empty") { _.isEmpty } ::
+  param("commenter") ::
+  body
 ).as[Comment]
 							</code>
 						</pre>
