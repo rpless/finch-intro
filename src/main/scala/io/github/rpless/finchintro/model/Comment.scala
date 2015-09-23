@@ -6,8 +6,10 @@ object Comment {
   implicit val decodeComment: DecodeJson[Comment] =
     jdecode3L(Comment.apply)("id", "commenter", "text")
 
+  private val extractComment = (c: Comment) => (c.id, c.commenter, c.text)
+
   implicit val encodeComment: EncodeJson[Comment] =
-    jencode3L((c: Comment) => (c.id, c.commenter, c.text))("id", "commenter", "text")
+    jencode3L(extractComment)("id", "commenter", "text")
 }
 
 /**
