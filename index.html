@@ -169,6 +169,9 @@ case class Comment(id: Option[Long], commenter: String, text: String)
 				<section>
 					<section>
 						<h1>Requests</h1>
+						<p>
+							import io.finch.request._
+						</p>
 						<aside class="notes">
 							Based on HTTP Requests <br />
 							How do we extract data from the requests <br />
@@ -229,11 +232,11 @@ val commentReader = for {
 						<h2>Applicative Comment Reader</h2>
 						<pre>
 							<code class="scala">
-								val commentReader = (
-								  paramOption("id").as[Long] ::
-								  param("commenter") ::
-								  body
-								).as[Comment]
+val commentReader = (
+  paramOption("id").as[Long] ::
+  param("commenter") ::
+  body
+).as[Comment]
 							</code>
 						</pre>
 						<aside class="notes">
@@ -246,6 +249,9 @@ val commentReader = for {
 				<section>
 					<section>
 						<h1>Response</h1>
+						<p>
+							import io.finch._
+						</p>
 						<aside class="notes">
 							Based on HTTP Responses <br />
 							How do we convert data to a request <br />
@@ -285,7 +291,7 @@ Created(Comment(Some(1234), "Ryan", "A Comment!"))
 							<code class="scala">
 import io.finch.argonaut._
 
-val extractComment: Comment => (Long, String, String) = Comment.unapply
+val extractComment = (c: Comment) => (c.id, c.commenter, c.text)
 
 implicit val encodeComment: EncodeJson[Comment] =
   jencode3L(extractComment)("id", "commenter", "text")
@@ -302,25 +308,17 @@ implicit val encodeComment: EncodeJson[Comment] =
 				<section>
 					<section>
 						<h1>Endpoint</h1>
+						<p>
+							import io.finch._
+							<br />
+							import io.finch.Endpoint
+						</p>
 						<aside class="notes">
 							Need to turn Requests into to Responses <br />
 							Matchers attempt to match against HTTP Request. <br />
 							Can include Method type, URI Path, and Request Readers <br />
 							Maps to Functions that produce responses <br />
 							TypeSafe Extraction.
-						</aside>
-					</section>
-
-					<section>
-						<h1>Basic Endpoint</h1>
-						<pre>
-							<code class="notes">
-val commentThreadsEndpoint = get("thread")
-							</code>
-						</pre>
-						<aside class="notes">
-							Matches on a GET request to the path /thread <br />
-							could be more Powerful
 						</aside>
 					</section>
 
@@ -333,17 +331,18 @@ def listCommentThreads(config: AppConfig): Endpoint[Response] =
 							</code>
 						</pre>
 						<aside class="notes">
+							Matches on a GET request to the path /thread <br />
 							Maps a Request into a Response
 						</aside>
 					</section>
 
 					<section>
-						<h1>Extracting Value from Endpoints</h1>
+						<h2>Extracting Value from Endpoints</h2>
 						<pre>
 							<code class="scala">
 def getCommentThread(config: AppConfig): Endpoint[CommentThread] =
   get("thread" / long) { (id: Long) =>
-    config.commentThreadRepo.get(id)
+    Ok(config.commentThreadRepo.get(id))
   }
 							</code>
 						</pre>
@@ -356,7 +355,7 @@ def getCommentThread(config: AppConfig): Endpoint[CommentThread] =
 					</section>
 
 					<section>
-						<h1>Request Readers in Endpoints</h1>
+						<h2>Request Readers in Endpoints</h2>
 						<pre>
 							<code class="scala">
 def createComment(config: AppConfig): Endpoint[Comment] = {
@@ -378,149 +377,27 @@ def createComment(config: AppConfig): Endpoint[Comment] = {
 					</section>
 
 					<section>
-						<h2>CommentThreadEndpoint</h2>
-						<pre>
-							<code class="scala">
-object CommentThreadEndpoint {
-
-  def apply(config: AppConfig) = {
-    listCommentThreads(config) :+:
-    getCommentThread(config) :+:
-    createComment(config)
-  }
-	
-  def listCommentThreads(config: AppConfig): Endpoint[Response] = ...
-
-  def getCommentThread(config: AppConfig): Endpoint[CommentThread] = ...
-
-  def createComment(config: AppConfig): Endpoint[Comment] = ...
-}
-							</code>
-						</pre>
-					</section>
-				</section>
-
-				<section>
-					<section><h2>Let's Build a Something with Finch</h2></section>
-
-					<section>
-						<h2>What are we looking to solve?</h2>
-						<h3>Simple Commenting Service</h3>
-
-						<aside class="notes">
-							Super Contrived Example: <br />
-							You have a website that needs a way for users to add comments. <br />
-							Anyone can view comments, but only authed users can comment <br />
-							We're gonna do a lot of hand waving as a result. <br />
-						</aside>
-					</section>
-
-					<section>
-						<h3>Start the Server</h3>
+						<h2>Main</h2>
 						<pre>
 							<code class="scala">
 import io.finch.argonaut._
+import io.github.rpless.finchintro.endpoint.CommentThreadEndpoints
 
 object Main extends App {
-  val config: AppConfig = AppConfig(new CommentThreadRepository)
-  val api = CommentThreadEndpoint(config).toService
-  Await.ready(Httpx.serve(":8080", api))
+  import CommentThreadEndpoints._
+  val config: AppConfig = ???
+
+  var endpoints =
+    listCommentThreads(config) :+:
+    getCommentThread(config) :+:
+    createComment(config)
+
+  Await.ready(Httpx.serve(":8080", endpoints.toService))
 }
 							</code>
 						</pre>
-						<aside class="notes">
-							Starts an Http server on 8080 using a Service <br />
-							The CommentThreadEndpoint is actually an Endpoint (Router)<br />
-						</aside>
-					</section>
-
-					<section>
-						<h2>Get a Comment Thread</h2>
-						<pre>
-							<code class="scala">
-object CommentThreadEndpoint {
-  def apply(config: AppConfig) = listComments(config)
-
-  def listComments(config: AppConfig): Router[Seq[CommentThread]] =
-    get("thread") { config.commentThreadRepo.list() }
-}
-							</code>
-						</pre>
-						<aside class="notes">
-							Basic Matcher: Accepts all GETs to /thread <br />
-							Calls The Function. <br />
-							BUT HOLD ON SERVICES ARE FROM REQUEST => RESPONSE.
-							NOT REQUEST => Seq[CommentThread] <br />
-							This can't work. Or can it?
-						</aside>
-					</section>
-
-					<section>
-						<h2>EncodeResponse</h2>
-						<pre>
-							<code class="scala">
-implicit val commentCodec: CodecJson[Comment] =
-  casecodec2(Comment.apply, Comment.unapply)("id", "text")
-
-implicit val commentThreadCodec: CodecJson[CommentThread] =
-  casecodec2(CommentThread.apply, CommentThread.unapply)("id", "comments")
-							</code>
-						</pre>
-						<aside class="notes">
-							Using Finch Argonaut we can convert argonaut Codecs into Decoders and Encoders. <br />
-							This allows us to encode CommentThreads as the body of an Http Response <br />
-						</aside>
-					</section>
-
-					<section>
-						<h2>Get a specific Comment Thread</h2>
-						<pre>
-							<code class="scala">
-def getCommentThread(config: AppConfig): Router[CommentThread] =
-  get("thread" / long) { (id: Long) =>
-    config.commentThreadRepo.get(id)
-  }
-							</code>
-						</pre>
-						<aside class="notes">
-							Arbitrary Long in the request. <br />
-							Gets collected, converted and passed to the function that is run <br />
-							Type Safe. Won't match if it can't be a long <br />
-						</aside>
-					</section>
-
-					<section>
-						<h2>Add it to the Endpoint</h2>
-						<pre>
-							<code class="scala">
-object CommentThreadEndpoint {
-  def apply(config: AppConfig) = {
-    listComments(config) :+: getCommentThread(config)
-  }
-}
-							</code>
-						</pre>
-						<aside class="notes">
-							Added to the Endpoint <br />
-							But what is happening here? Those Routers don't have the same type. <br />
-						</aside>
-					</section>
-
-					<section>
-						<h2>Creating a comment with Request Readers</h2>
-						<pre>
-							<code class="scala">
-def createComment(config: AppConfig): Router[Comment] = {
-  post("thread" / long / "comment" ? commentReader) {
-    (threadId: Long, comment: Comment) =>
-      config.commentThreadRepo.createComment(threadId, comment)
-}
-							</code>
-						</pre>
-						<aside class="notes">
-							Use the Req Reader to get a comment <br />
-							Reade directly off the body of the request <br />
-							What does the commentReader look like? <br />
+						<aside class="scala">
+							CoProduct Endpoint <br />
 						</aside>
 					</section>
 				</section>
