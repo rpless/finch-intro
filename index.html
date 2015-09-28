@@ -280,7 +280,7 @@ Created("Some String").withHeaders("Cache-Control", "public")
 Created(Comment(Some(1234), "Ryan", "A Comment!"))
 							</code>
 						</pre>
-						<aside class="">
+						<aside class="notes">
 							Can Encode a Case class as the body of an HTTP Response <br />
 						</aside>
 					</section>
@@ -326,7 +326,7 @@ implicit val encodeComment: EncodeJson[Comment] =
 						<h2>Wiring it up</h2>
 						<pre>
 							<code class="scala">
-def listCommentThreads(config: AppConfig): Endpoint[Response] =
+def listCommentThreads(config: AppConfig): Endpoint[Seq[CommentThread]] =
   get("thread") { Ok(config.commentThreadRepo.list()) }
 							</code>
 						</pre>
@@ -396,7 +396,7 @@ object Main extends App {
 }
 							</code>
 						</pre>
-						<aside class="scala">
+						<aside class="notes">
 							CoProduct Endpoint <br />
 						</aside>
 					</section>
