@@ -422,7 +422,7 @@ object Main extends App {
   import CommentThreadEndpoints._
   val config: AppConfig = ???
 
-  var endpoints =
+  val endpoints =
     listCommentThreads(config) :+:
     getCommentThread(config) :+:
     createComment(config)
@@ -432,8 +432,58 @@ object Main extends App {
 							</code>
 						</pre>
 						<aside class="notes">
-							CoProduct Endpoint <br />
+							Coproduct Endpoint <br />
 						</aside>
+					</section>
+
+					<section>
+						<h1>What about errors?</h1>
+					</section>
+
+					<section>
+						<h2>Filters</h2>
+						<pre>
+							<code class="scala">
+object Errors {
+  val errorHandler: PartialFunction[Throwable, Request] = {
+    case NotPresent(ParamItem(p)) =>
+      BadRequest(Map("error" -> "param_not_present", "param" -> p).asJson)
+    ...
+  }
+
+  type HttpService = Service[Request, Response]
+
+  def handleExceptions = new SimpleFilter[Request, Response] {
+    def apply(req: Request, service: HttpService): Future[Response] =
+      service(req).handle(errorHandler)
+  }
+}
+							</code>
+						</pre>
+						<aside class="notes">
+							Need to handle exceptions <br />
+							We have a Service that produces Response, what if we filter out the exceptions <br />
+						</aside>
+					</section>
+
+					<section>
+						<h2>Add the Error Handler</h2>
+						<pre>
+							<code class="scala">
+object Main extends App {
+  import Errors._
+  val endpoints = (
+    listCommentThreads(config) :+:
+    getCommentThread(config) :+:
+    createComment(config)
+  ).toService
+
+  val api = handleExceptions andThen endpoints
+
+  Await.ready(Httpx.serve(":8080", api))
+}
+							</code>
+						</pre>
 					</section>
 				</section>
 
@@ -457,6 +507,14 @@ val commentParamReader = (
 
 					<section>
 						<h2>File Uploads</h2>
+						<pre>
+							<code class="scala">
+def createCommentWithImage(config: AppConfig): Endpoint[Comment] = {
+  post("thread" / long / "comment" ? fileUpload("file")) {
+    (id: Long, upload: FileUpload) => Ok(config.fileStorage(upload))
+  }
+							</code>
+						</pre>
 					</section>
 
 					<section>
