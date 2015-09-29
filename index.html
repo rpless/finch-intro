@@ -57,8 +57,8 @@
 
 						<aside class="notes">
 							Open Source Project in the Finagle ecosystem. <br />
-							Provides a more idiomatic and Functional Finagle-Http. <br />
-							Its been around since April, I started contributing in August <br />
+							Provides a more idiomatic HTTP library built around Finagle-HTTPx. <br />
+							Its been around since April 2014, I started contributing in August 2014 <br />
 						</aside>
 					</section>
 
@@ -69,9 +69,9 @@
 						<a target="_blank" href="https://twitter.github.io/finagle/">twitter.github.io/finagle/</a>
 
 						<aside class="notes">
+							Twitter project <br/>
 							Extensible RPC system for the JVM used mainly to construct high-concurrency systems. <br />
-							Protocol Agnostic. <br />
-							Particularly interested in the Http library which is built on Netty 3. <br />
+							Protocol Agnostic. (this Talk focuses on HTTP)<br />
 						</aside>
 					</section>
 				</section>
@@ -81,9 +81,9 @@
 						<h2>Quick Finagle Overview</h2>
 						<aside class="notes">
 							Quick review of Finagle's core concepts for those that haven't used it. <br />
-							"Your Server as a Function" <br />
-							Implements interfaces for both clients and servers <br />
-							Only going to focus on Server side. <br />
+							"Your Server as a Function"<br />
+							can implement interfaces for both clients and servers <br />
+							modeled as functions<br />
 						</aside>
 					</section>
 					<section>
@@ -108,7 +108,7 @@
 					<aside class="notes">
 						Implement Application Logic <br />
 						Its just a function. <br />
-						Backbone of server implementations. <br />
+						Finch uses these less directly <br />
 					</aside>
 					</section>
 
@@ -120,6 +120,7 @@
 							Also a function. <br />
 							Given a request and the next Service in the Chain. <br />
 							Most commonly used where Requests and Responses are the same type. <br />
+							Common use case in Finch is error handling <br />
 						</aside>
 					</section>
 
@@ -134,9 +135,10 @@
 
 				<section>
 					<section>
-						<h2>Let's Build a Something with Finch</h2>
+						<h2>Let's Build Something with Finch</h2>
 						<aside class="notes">
 							We'll walk through a simple example to show how powerful finch is <br />
+							Uses Finagle-HTTP Request/Response types <br />
 							Services from Request => Future[Response]
 						</aside>
 					</section>
@@ -155,7 +157,6 @@
 
 					<section>
 						<h2>Modeling our data</h2>
-
 						<pre>
 							<code class="scala">
 case class CommentThread(id: Long, comments: Seq[Comment])
@@ -163,6 +164,11 @@ case class CommentThread(id: Long, comments: Seq[Comment])
 case class Comment(id: Option[Long], commenter: String, text: String)
 							</code>
 						</pre>
+						<aside class="notes">
+							CommentThread holds a logical set of comments <br />
+							Comment has its text and info about the user that commented <br />
+							With this in mind let's build a Service with Finch <br />
+						</aside>
 					</section>
 				</section>
 
@@ -173,7 +179,8 @@ case class Comment(id: Option[Long], commenter: String, text: String)
 							import io.finch.request._
 						</p>
 						<aside class="notes">
-							Based on HTTP Requests <br />
+							Based on Finagle HTTP Requests <br />
+							Standard set of accessors. very OO <br />
 							How do we extract data from the requests <br />
 						</aside>
 					</section>
@@ -181,13 +188,26 @@ case class Comment(id: Option[Long], commenter: String, text: String)
 					<section>
 						<h2>Request Readers</h2>
 						<pre>
+							<code class="notes">
+val idReader = param("id")
+							</code>
+						</pre>
+						<aside class="notes">
+							A Reader Monad for handling requests <br />
+							We can apply these to Requests to get Future[A] <br />
+							Readers for `params`, `headers`, `body`, and more... <br />
+						</aside>
+					</section>
+
+					<section>
+						<h2>Reading More Complex Data</h2>
+						<pre>
 							<code class="scala">
 val commentReader = body.as[Comment]
 							</code>
 						</pre>
 						<aside class="notes">
-							A Reader Monad for handling requests <br />
-							Readers for `params`, `headers`, `body`, `files`, and more... <br />
+
 						</aside>
 					</section>
 
@@ -206,7 +226,9 @@ implicit val commentThreadCodec: DecodeJson[CommentThread] =
 							</code>
 						</pre>
 						<aside class="notes">
-							Type Class <br />
+							Finch Argonaut introduces Type Class <br />
+							Know how to convert Request => Json. <br/>
+							Need to tell it how to convert Json => Data <br />
 							implicits to convert the Type of Request Readers <br />
 						</aside>
 					</section>
@@ -242,6 +264,7 @@ val commentReader = (
 						<aside class="notes">
 							Applicative <br />
 							Gives you all the errors <br />
+							But is still a request Reader <br />
 						</aside>
 					</section>
 				</section>
@@ -282,6 +305,7 @@ Created(Comment(Some(1234), "Ryan", "A Comment!"))
 						</pre>
 						<aside class="notes">
 							Can Encode a Case class as the body of an HTTP Response <br />
+							Again introduce a type class
 						</aside>
 					</section>
 
@@ -299,8 +323,8 @@ implicit val encodeComment: EncodeJson[Comment] =
 						</pre>
 						<aside class="notes">
 							finch argonaut provides Json => Response <br />
+							just need to tell it how to do Data => Json <br />
 							Just like Decode Requests <br />
-							implicit conversions <br />
 						</aside>
 					</section>
 				</section>
@@ -323,11 +347,14 @@ implicit val encodeComment: EncodeJson[Comment] =
 					</section>
 
 					<section>
-						<h2>Wiring it up</h2>
+						<h2></h2>Simple Endpoint</h2>
 						<pre>
 							<code class="scala">
-def listCommentThreads(config: AppConfig): Endpoint[Seq[CommentThread]] =
-  get("thread") { Ok(config.commentThreadRepo.list()) }
+object CommentThreadEndpoints {
+  def listCommentThreads(config: AppConfig): Endpoint[Seq[CommentThread]] =
+    get("thread") { Ok(config.commentThreadRepo.list()) }
+  ...
+}
 							</code>
 						</pre>
 						<aside class="notes">
@@ -340,10 +367,13 @@ def listCommentThreads(config: AppConfig): Endpoint[Seq[CommentThread]] =
 						<h2>Extracting Value from Endpoints</h2>
 						<pre>
 							<code class="scala">
-def getCommentThread(config: AppConfig): Endpoint[CommentThread] =
+object CommentThreadEndpoints {
+  def getCommentThread(config: AppConfig): Endpoint[CommentThread] =
   get("thread" / long) { (id: Long) =>
     Ok(config.commentThreadRepo.get(id))
   }
+  ...
+}
 							</code>
 						</pre>
 						<aside class="notes">
@@ -358,15 +388,20 @@ def getCommentThread(config: AppConfig): Endpoint[CommentThread] =
 						<h2>Request Readers in Endpoints</h2>
 						<pre>
 							<code class="scala">
-def createComment(config: AppConfig): Endpoint[Comment] = {
-  post("thread" / long / "comment" ? commentReader) {
-    (threadId: Long, comment: Comment) =>
-    Created(config.commentThreadRepo.createComment(threadId, comment))
-  }
+object CommentThreadEndpoints {
+  def createComment(config: AppConfig): Endpoint[Comment] = {
+    post("thread" / long / "comment" ? commentReader) {
+      (threadId: Long, comment: Comment) =>
+        Created(config.commentThreadRepo.createComment(threadId, comment))
+    }
+  ...
+}
 							</code>
 						</pre>
 						<aside class="notes">
-							Use Request Reader to extract the value we care about
+							Use Request Reader to extract the value we care about <br />
+							Extracting a 'complex' type <br />
+							Can also use commentReader inside Mapped function if we wanted <br />
 						</aside>
 					</section>
 				</section>
@@ -421,6 +456,10 @@ val commentParamReader = (
 					</section>
 
 					<section>
+						<h2>File Uploads</h2>
+					</section>
+
+					<section>
 						<h2>JSON Library Support</h2>
 						<ul>
 							<li>Argonaut</li>
@@ -428,10 +467,6 @@ val commentParamReader = (
 							<li>Jackson</li>
 							<li>Json4s</li>
 						</ul>
-					</section>
-
-					<section>
-						<h2>File Uploads</h2>
 					</section>
 				</section>
 
